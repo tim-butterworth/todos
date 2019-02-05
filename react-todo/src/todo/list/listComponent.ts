@@ -7,11 +7,12 @@ import {
 } from './list';
 import { ToDo } from '../todo-state'
 import { ToDoListState } from '../../app/StoreFactory';
+import { TODO_ACTION } from '../todo-state';
 
 const mapStateToProps = (state: ToDoListState): ListProps => ({ todos: state.todoList });
 const mapDispatchToProps = (dispatch: Dispatch): ListDispatch => ({
     deleteToDo: (id: number) => {
-        dispatch({ type: "DELETE_TODO", id });
+        dispatch({ type: TODO_ACTION.DELETE, id });
     }
 });
 

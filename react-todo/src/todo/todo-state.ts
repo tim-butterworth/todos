@@ -12,7 +12,7 @@ export interface ToDo {
     id: number;
 }
 
-enum TODO_ACTION {
+export enum TODO_ACTION {
     DELETE = 'DELETE'
 }
 
@@ -45,7 +45,7 @@ const todoList: Reducer<ToDo[]> = (state: ToDo[] = initialTodos, action: ToDoLis
     console.log("action", action);
 
     if (action.type === TODO_ACTION.DELETE) {
-        return R.filter((todo: ToDo) => todo.id === action.id, state)
+        return R.filter((todo: ToDo) => todo.id !== action.id, state)
     }
     return state;
 }
