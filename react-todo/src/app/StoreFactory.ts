@@ -1,19 +1,18 @@
 import {
-    Store,
-    createStore,
+    Store
+    , createStore
+    , applyMiddleware
 } from 'redux';
 
-import {
-    todoList,
-    ToDo
-} from '../todo/todo-state';
-import { ReducerFactory } from './AppFactory';
+import { ReducerFactory, MiddlewareFactory } from './AppFactory';
+import { AppState } from './AppState';
 
-export interface ToDoListState {
-    todoList: ToDo[];
-}
-export interface AppState extends ToDoListState { }
-
-const storeFactory = (reducerFactory: ReducerFactory): Store<AppState> => createStore(reducerFactory());
+const storeFactory = (
+    reducerFactory: ReducerFactory<AppState>,
+    middlewareFactory: MiddlewareFactory<AppState>
+): Store<AppState> => createStore(
+    reducerFactory(),
+    applyMiddleware(middlewareFactory())
+);
 
 export { storeFactory };

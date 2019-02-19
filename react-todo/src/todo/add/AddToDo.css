@@ -1,0 +1,11 @@
+.todo-text-input label {
+    float: left;
+}
+.todo-text-input input {
+
+}
+.todo-add-container {
+    width: 500px;
+    margin: auto;
+    border: solid 1px;
+}

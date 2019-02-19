@@ -4,7 +4,7 @@ import React from 'react';
 import {
     ToDoItem
     , ToDoProps
-} from '../item/item';
+} from './item/item';
 import { ToDo } from '../todo-state';
 
 type updateStateFun = (arg: string) => void;
@@ -17,7 +17,8 @@ const mappingFun = (data: ToDoProps, i: number): JSX.Element => (
     <ToDoItem key={i} {...data} />
 )
 
-const ToDoList = ({ todos, deleteToDo }: ListState): JSX.Element => {
+const ToDoList = (listState: ListState): JSX.Element => {
+    const { todos, deleteToDo } = listState;
     return (
         <div>
             {

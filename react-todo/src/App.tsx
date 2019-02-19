@@ -1,42 +1,36 @@
 import React, { Component, ReactNode } from 'react';
-import { ListComponent } from './todo/list/listComponent';
 import logo from './logo.svg';
 import './App.css';
 
 import { Provider } from 'react-redux';
 
+import { ListComponent } from './todo/list/listComponent';
+import { AddToDoComponent } from './todo/add/addToDoComponent';
 import {
     StoreFactory
     , ReducerFactory
+    , MiddlewareFactory
+    , AppFactory
 } from './app/AppFactory';
+import { AppState } from './app/AppState';
 
-interface AppProps {
-    count: number;
-    text: string;
-}
-
-const app = (storeFactory: StoreFactory, reducerFactory: ReducerFactory): typeof Component => {
-    return class App extends Component<{}, AppProps> {
-
-        constructor(props: {} = {}) {
-            super(props);
-
-            this.state = { count: 2, text: "default text" }
-        }
+const app = (
+    storeFactory: StoreFactory,
+    reducerFactory: ReducerFactory<AppState>,
+    middlewareFactory: MiddlewareFactory<AppState>
+): typeof Component => {
+    return class App extends Component<{}, {}> {
 
         render(): ReactNode {
             return (
-                <Provider store={storeFactory(reducerFactory)}>
+                <Provider store={storeFactory(reducerFactory, middlewareFactory)}>
                     <div className="App">
-                        <div className="title">{this.state.text}</div>
-                        <div>
-                            <ListComponent />
-                        </div>
+                        <AddToDoComponent />
+                        <ListComponent />
                     </div>
                 </Provider>
             );
         }
-
     };
 }
 
