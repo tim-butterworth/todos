@@ -10,7 +10,7 @@ import { AppState } from '../app/AppState';
 import { getTestConnectedComponent } from '../test-tools/TestConnectedComponent';
 import { reducerFactory } from '../app/ReducerFactory';
 import { middlewareFactory } from '../app/MiddlewareFactory';
-import { deleteAction } from './todo-state';
+import { deleteAction, moveAction, ToDo } from './todo-state';
 import {
     updateTitleAction
     , updateDescriptionAction
@@ -182,7 +182,7 @@ describe('[state] todo', () => {
                         withId(getToDo2(), 1),
                         withId(getToDo3(), 2)
                     ]);
-                })
+                });
 
                 it('can delete the first todo', () => {
                     store.dispatch(deleteAction(0));
@@ -236,22 +236,237 @@ describe('[state] todo', () => {
             });
 
             describe('[reorder-todo]', () => {
-                it('can move the first todo down 1', () => {
-                    const partial1 = { title: "title 1", description: "description 1" };
-                    const partial2 = { title: "title 2", description: "description 2" };
-                    const partial3 = { title: "title 3", description: "description 3" };
+                const createNewTodos = (todoCount: number): void => {
+                    R.forEach(
+                        (v: number) => {
+                            store.dispatch(newToDoAction({
+                                title: `title_${v}`,
+                                description: `description_${v}`
+                            }));
+                        },
+                        R.range(0, todoCount)
+                    );
 
-                    store.dispatch(newToDoAction(partial1));
-                    store.dispatch(newToDoAction(partial2));
-                    store.dispatch(newToDoAction(partial3));
+                };
 
-                    store.dispatch({ type: "MOVE_TODO", id: 0, index: 1 });
+                const makeToDo = (index: number): ToDo => ({
+                    id: index
+                    , title: `title_${index}`
+                    , description: `description_${index}`
+                });
+                const todosStartInTheRightOrder = (todos: ToDo[]): void => {
+                    const mapIndexed = R.addIndex<ToDo, { value: ToDo; index: number; }>(R.map)
+                    const todosWithIndex: {
+                        value: ToDo;
+                        index: number;
+                    }[] = mapIndexed(<ToDo>(value: ToDo, index: number) => ({ index, value }), todos);
 
-                    expect(stateHolder[0].todos).toEqual([
-                        withId(partial1, 0)
-                        , withId(partial2, 1)
-                        , withId(partial3, 2)
-                    ]);
+                    R.forEach(
+                        ({ value, index }) => expect(value).toEqual(makeToDo(index))
+                        , todosWithIndex
+                    );
+                };
+
+                const sectionIsInRightOrder = (todos: ToDo[], { start, finish, offset }: {
+                    start: number;
+                    finish: number;
+                    offset: number;
+                }): void => {
+                    R.forEach(
+                        (v: number) => expect(todos[v]).toEqual(makeToDo(v + offset))
+                        , R.range(start, finish + 1)
+                    );
+                };
+
+                const areInRightOrder = (todos: ToDo[], { start, finish }: {
+                    start: number;
+                    finish: number;
+                }): void => sectionIsInRightOrder(todos, { start, finish, offset: 0 });
+
+                describe('[moving up]', () => {
+                    it('[can move the last up 1]', () => {
+                        createNewTodos(7);
+                        todosStartInTheRightOrder(stateHolder[0].todos);
+
+                        const current = 6;
+                        const target = 5;
+                        store.dispatch(moveAction({ current, target }));
+
+                        const finalState: AppState = stateHolder[0];
+                        const finalTodos: ToDo[] = finalState.todos;
+
+                        expect(finalTodos.length).toEqual(7);
+                        expect(finalTodos[target]).toEqual(makeToDo(current));
+                        expect(finalTodos[current]).toEqual(makeToDo(target));
+
+                        areInRightOrder(finalTodos, { start: 0, finish: target - 1 })
+                    });
+
+                    it('[can move the last to the top]', () => {
+                        createNewTodos(10);
+                        todosStartInTheRightOrder(stateHolder[0].todos);
+
+                        const current = 9;
+                        const target = 0;
+                        store.dispatch(moveAction({ current, target }));
+
+                        const finalState: AppState = stateHolder[0];
+                        const finalTodos: ToDo[] = finalState.todos;
+
+                        expect(finalTodos.length).toEqual(10);
+                        expect(finalTodos[target]).toEqual(makeToDo(current));
+
+                        sectionIsInRightOrder(finalTodos, { start: 1, finish: 9, offset: -1 });
+                    });
+
+                    it('[can move the last to the middle]', () => {
+                        createNewTodos(10);
+                        todosStartInTheRightOrder(stateHolder[0].todos);
+
+                        const current = 9;
+                        const target = 4;
+                        store.dispatch(moveAction({ current, target }));
+
+                        const finalState: AppState = stateHolder[0];
+                        const finalTodos: ToDo[] = finalState.todos;
+
+                        expect(finalTodos.length).toEqual(10);
+                        expect(finalTodos[target]).toEqual(makeToDo(current));
+
+                        areInRightOrder(finalTodos, { start: 0, finish: target - 1 });
+                        sectionIsInRightOrder(finalTodos, { start: target + 1, finish: current, offset: -1 });
+                    });
+
+                    it('[can move a middle one to another middle spot]', () => {
+                        createNewTodos(10);
+                        todosStartInTheRightOrder(stateHolder[0].todos);
+
+                        const current = 7;
+                        const target = 4;
+                        store.dispatch(moveAction({ current, target }));
+
+                        const finalState: AppState = stateHolder[0];
+                        const finalTodos: ToDo[] = finalState.todos;
+
+                        expect(finalTodos.length).toEqual(10);
+                        expect(finalTodos[target]).toEqual(makeToDo(current));
+
+                        areInRightOrder(finalTodos, { start: 0, finish: target - 1 });
+                        sectionIsInRightOrder(finalTodos, { start: target + 1, finish: current, offset: -1 });
+                    });
+                });
+
+                describe('[moving down]', () => {
+                    it('[can move the first todo down 1]', () => {
+                        createNewTodos(5);
+                        todosStartInTheRightOrder(stateHolder[0].todos);
+
+                        const current = 0;
+                        const target = 1;
+                        store.dispatch(moveAction({ current, target }));
+
+                        const finalState: AppState = stateHolder[0];
+                        const finalTodos: ToDo[] = finalState.todos;
+
+                        expect(finalTodos.length).toEqual(5);
+                        expect(finalTodos[target]).toEqual(makeToDo(0));
+                        expect(finalTodos[current]).toEqual(makeToDo(1));
+
+                        areInRightOrder(finalTodos, { start: 2, finish: 4 })
+                    });
+
+                    it('[can move the first todo to the end]', () => {
+                        createNewTodos(10);
+                        todosStartInTheRightOrder(stateHolder[0].todos);
+                        expect(stateHolder[0].todos).toHaveLength(10);
+
+                        const current = 0;
+                        const target = 9;
+                        store.dispatch(moveAction({ current, target }));
+
+                        const finalState: AppState = stateHolder[0];
+                        const finalTodos: ToDo[] = finalState.todos;
+
+                        expect(finalTodos).toHaveLength(10);
+                        expect(finalTodos[target]).toEqual(makeToDo(0));
+
+                        sectionIsInRightOrder(finalTodos, { start: 0, finish: target - 1, offset: 1 });
+                    });
+
+                    it('[can move the first todo to the middle]', () => {
+                        createNewTodos(10);
+                        todosStartInTheRightOrder(stateHolder[0].todos);
+                        expect(stateHolder[0].todos).toHaveLength(10);
+
+                        const current = 0;
+                        const target = 4;
+                        store.dispatch(moveAction({ current, target }));
+
+                        const finalState: AppState = stateHolder[0];
+                        const finalTodos: ToDo[] = finalState.todos;
+
+                        expect(finalTodos).toHaveLength(10);
+                        expect(finalTodos[target]).toEqual(makeToDo(0));
+
+                        sectionIsInRightOrder(finalTodos, { start: 0, finish: target - 1, offset: 1 });
+                        areInRightOrder(finalTodos, { start: target + 1, finish: 9 });
+                    });
+
+                    it('[can move middle todo to the bottom]', () => {
+                        createNewTodos(10);
+                        todosStartInTheRightOrder(stateHolder[0].todos);
+                        expect(stateHolder[0].todos).toHaveLength(10);
+
+                        const current = 4;
+                        const target = 9;
+                        store.dispatch(moveAction({ current, target }));
+
+                        const finalState: AppState = stateHolder[0];
+                        const finalTodos: ToDo[] = finalState.todos;
+
+                        expect(finalTodos).toHaveLength(10);
+                        expect(finalTodos[target]).toEqual(makeToDo(current));
+
+                        areInRightOrder(finalTodos, { start: 0, finish: current - 1 });
+                        sectionIsInRightOrder(finalTodos, { start: current, finish: target - 1, offset: 1 });
+                    });
+
+                    it('[can move middle todo to the middle]', () => {
+                        createNewTodos(10);
+                        todosStartInTheRightOrder(stateHolder[0].todos);
+                        expect(stateHolder[0].todos).toHaveLength(10);
+
+                        const current = 4;
+                        const target = 6;
+                        store.dispatch(moveAction({ current, target }));
+
+                        const finalState: AppState = stateHolder[0];
+                        const finalTodos: ToDo[] = finalState.todos;
+
+                        expect(finalTodos).toHaveLength(10);
+                        expect(finalTodos[target]).toEqual(makeToDo(current));
+
+                        areInRightOrder(finalTodos, { start: 0, finish: current - 1 });
+                        sectionIsInRightOrder(finalTodos, { start: current, finish: target - 1, offset: 1 });
+                        areInRightOrder(finalTodos, { start: target + 1, finish: 9 });
+                    });
+                });
+
+                describe('[not moving]', () => {
+                    it('[does nothing if current and target are the same]', () => {
+                        createNewTodos(10);
+                        todosStartInTheRightOrder(stateHolder[0].todos);
+                        expect(stateHolder[0].todos).toHaveLength(10);
+
+                        const current = 5;
+                        const target = 5;
+                        store.dispatch(moveAction({ current, target }));
+
+                        const finalState: AppState = stateHolder[0];
+                        const finalTodos: ToDo[] = finalState.todos;
+
+                        todosStartInTheRightOrder(finalTodos);
+                    });
                 });
             });
         });
