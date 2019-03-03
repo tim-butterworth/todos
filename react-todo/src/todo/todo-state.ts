@@ -19,7 +19,7 @@ export enum TODO_ACTION {
     MOVE = 'MOVE',
 }
 
-interface DeleteAction {
+export interface DeleteAction {
     type: TODO_ACTION.DELETE;
     id: number;
 }

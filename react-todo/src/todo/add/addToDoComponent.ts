@@ -12,16 +12,16 @@ import {
 
 import {
     updateTitleAction
-    , newToDoAction
     , updateDescriptionAction
     , ToDoContent
 } from './addToDo-state';
+import { newToDoCommand } from '../newToDoCommandHandler';
 
 import { AddToDoState } from './addToDo-state';
 
 const mapStateToProps = ({ addToDo }: AddToDoState): AddToDoStateProps => addToDo;
 const mapDispatchToProps = (dispatch: Dispatch): AddToDoDispatchProps => ({
-    add: (todoContent: ToDoContent) => dispatch(newToDoAction(todoContent)),
+    add: (todoContent: ToDoContent) => dispatch(newToDoCommand()),
     updateTitle: (title: string) => dispatch(updateTitleAction(title)),
     updateDescription: (description: string) => dispatch(updateDescriptionAction(description))
 });

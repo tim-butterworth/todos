@@ -24,6 +24,7 @@ export enum ADD_TYPES {
     UPDATE_TITLE = "UPDATE_TITLE",
     UPDATE_DESCRIPTION = "UPDATE_DESCRIPTION",
     NEW_TODO = "NEW_TODO",
+    RESET = "RESET",
 }
 
 export interface UpdateTitleAction {
@@ -34,9 +35,8 @@ export interface UpdateDescriptionAction {
     type: ADD_TYPES.UPDATE_DESCRIPTION;
     description: string;
 }
-export interface NewToDoAction {
-    type: ADD_TYPES.NEW_TODO;
-    todoContent: ToDoContent;
+export interface ResetAction {
+    type: ADD_TYPES.RESET;
 }
 
 const updateTitleAction = (title: string): UpdateTitleAction => ({
@@ -47,17 +47,13 @@ const updateDescriptionAction = (description: string): UpdateDescriptionAction =
     type: ADD_TYPES.UPDATE_DESCRIPTION,
     description
 });
-const newToDoAction = (todoContent: ToDoContent): NewToDoAction => ({
-    type: ADD_TYPES.NEW_TODO,
-    todoContent
-});
 
 const initialState: AddToDo = {
     description: "",
     title: ""
 };
 
-type AddToDoActions = CombinedActions<UpdateTitleAction | UpdateDescriptionAction | AddAction>;
+type AddToDoActions = CombinedActions<UpdateTitleAction | UpdateDescriptionAction | ResetAction>;
 const addToDo: Reducer<AddToDo> = (state: AddToDo = initialState, action: AddToDoActions) => {
     switch (action.type) {
         case ADD_TYPES.UPDATE_TITLE: {
@@ -66,7 +62,7 @@ const addToDo: Reducer<AddToDo> = (state: AddToDo = initialState, action: AddToD
         case ADD_TYPES.UPDATE_DESCRIPTION: {
             return { ...state, description: action.description };
         }
-        case TODO_ACTION.ADD: {
+        case ADD_TYPES.RESET: {
             return {
                 ...initialState,
             }
@@ -81,5 +77,4 @@ export {
     addToDo
     , updateTitleAction
     , updateDescriptionAction
-    , newToDoAction
 };
